@@ -71,19 +71,47 @@ pub fn masked_softmax(y: &mut Tensor<f32>) {
 }
 
 pub fn rms_norm(y: &mut Tensor<f32>, x: &Tensor<f32>, w: &Tensor<f32>, epsilon: f32) {
-    todo!("实现 rms_norm，计算前做一些必要的检查会帮助你后续调试")
+    let shape = x.shape();
+    let rows = shape[0]; 
+    let cols = shape[1]; 
+
+    let _x = x.data();
+    let _y = unsafe { y.data_mut() };
+    let _w = w.data();
+
+    assert_eq!(w.size(), rows, "Weight vector size must match the number of rows");
+
+    for i in 0..rows { 
+        let start = i * cols; 
+        let end = start + cols; 
+
+        let mut sum = 0.0;
+        for j in start..end {
+            sum += _x[j].powi(2);
+        }
+        let mean_square = sum / cols as f32;
+        let rms = f32::sqrt(mean_square + epsilon); 
+
+        for j in start..end {
+            _y[j] = (_w[j % w.size()] * _x[j]) / rms;
+        }
+    }
 }
 
 // y = silu(x) * y
 // hint: this is an element-wise operation
 pub fn swiglu(y: &mut Tensor<f32>, x: &Tensor<f32>) {
-    // let len = y.size();
-    // assert!(len == x.size());
+    let len = y.size();
+    assert!(len == x.size());
 
-    // let _y = unsafe { y.data_mut() };
-    // let _x = x.data();
+    let _y = unsafe { y.data_mut() };
+    let _x = x.data();
+    let E = std::f32::consts::E;
 
-    todo!("实现 silu，这里给了一些前期准备工作的提示，你可以参考")
+    for i in 0..len {
+        let x = _x[i];
+        _y[i] *= x / (1. + E.powf(-x));
+    }
 }
 
 // C = beta * C + alpha * A @ B^T
@@ -189,6 +217,7 @@ fn test_rms_norm() {
     let x = Tensor::<f32>::new(vec![1., 2., 3., 4.], &vec![2, 2]);
     let w = Tensor::<f32>::new(vec![1., 2.], &vec![2]);
     rms_norm(&mut y, &x, &w, 1e-6);
+    y.print();
     assert!(y.close_to(
         &Tensor::<f32>::new(
             vec![0.6324554, 2.5298216, 0.8485281, 2.2627416],
