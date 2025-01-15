@@ -72,25 +72,29 @@ pub fn masked_softmax(y: &mut Tensor<f32>) {
 
 pub fn rms_norm(y: &mut Tensor<f32>, x: &Tensor<f32>, w: &Tensor<f32>, epsilon: f32) {
     let shape = x.shape();
-    let rows = shape[0]; 
-    let cols = shape[1]; 
+    let rows = shape[0];
+    let cols = shape[1];
 
     let _x = x.data();
     let _y = unsafe { y.data_mut() };
     let _w = w.data();
 
-    assert_eq!(w.size(), rows, "Weight vector size must match the number of rows");
+    assert_eq!(
+        w.size(),
+        rows,
+        "Weight vector size must match the number of rows"
+    );
 
-    for i in 0..rows { 
-        let start = i * cols; 
-        let end = start + cols; 
+    for i in 0..rows {
+        let start = i * cols;
+        let end = start + cols;
 
         let mut sum = 0.0;
         for j in start..end {
             sum += _x[j].powi(2);
         }
         let mean_square = sum / cols as f32;
-        let rms = f32::sqrt(mean_square + epsilon); 
+        let rms = f32::sqrt(mean_square + epsilon);
 
         for j in start..end {
             _y[j] = (_w[j % w.size()] * _x[j]) / rms;
@@ -106,19 +110,47 @@ pub fn swiglu(y: &mut Tensor<f32>, x: &Tensor<f32>) {
 
     let _y = unsafe { y.data_mut() };
     let _x = x.data();
-    let E = std::f32::consts::E;
+    let e = std::f32::consts::E;
 
     for i in 0..len {
         let x = _x[i];
-        _y[i] *= x / (1. + E.powf(-x));
+        _y[i] *= x / (1. + e.powf(-x));
     }
 }
 
 // C = beta * C + alpha * A @ B^T
 // hint: You don't need to do an explicit transpose of B
 pub fn matmul_transb(c: &mut Tensor<f32>, beta: f32, a: &Tensor<f32>, b: &Tensor<f32>, alpha: f32) {
-    todo!("实现 matmul_transb，计算前做一些必要的检查会帮助你后续调试");
+    let c_shape = c.shape().to_vec();
+    let a_shape = a.shape();
+    let b_shape = b.shape();
+    assert!(c_shape.len() == 2, "C must be a 2D tensor");
+    assert!(a_shape.len() == 2, "A must be a 2D tensor");
+    assert!(b_shape.len() == 2, "B must be a 2D tensor");
+    assert!(c_shape[0] == a_shape[0], "C and A must have the same number of rows");
+    assert!(c_shape[1] == b_shape[0], "C columns must match B rows (after transpose)");
+    assert!(a_shape[1] == b_shape[1], "A columns must match B columns (before transpose)");
+
+    let a_ = a.data();
+    let b_ = b.data();
+    let c_ = unsafe { c.data_mut() };
+
+    let m = c_shape[0]; 
+    let n = c_shape[1]; 
+    let k = a_shape[1]; 
+
+    for i in 0..m {
+        for j in 0..n {
+            let mut sum = 0.0;
+            for p in 0..k {
+                // A[i, p] 和 B[j, p]
+                sum += a_[i * k + p] * b_[j * k + p]; // B 是轉置
+            }
+            c_[i * n + j] = beta * c_[i * n + j] + alpha * sum;
+        }
+    }
 }
+
 
 // Dot product of two tensors (treated as vectors)
 #[allow(unused)]
