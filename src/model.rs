@@ -234,7 +234,8 @@ pub fn test_load_safetensors() {
     assert_eq!(model.d, 128);
     assert_eq!(model.dqkv, 16);
     assert_eq!(model.di, 384);
-
+    print!("{}","IAMHERE\n");
+    print!("{:?}",model.params.embedding_table.data()[50]);
     assert!(float_eq(
         &model.params.embedding_table.data()[50],
         &0.14453125,
