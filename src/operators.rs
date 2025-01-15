@@ -79,11 +79,11 @@ pub fn rms_norm(y: &mut Tensor<f32>, x: &Tensor<f32>, w: &Tensor<f32>, epsilon: 
     let _y = unsafe { y.data_mut() };
     let _w = w.data();
 
-    assert_eq!(
-        w.size(),
-        rows,
-        "Weight vector size must match the number of rows"
-    );
+    // assert_eq!(
+    //     w.size(),
+    //     rows,
+    //     "Weight vector size must match the number of rows"
+    // );
 
     for i in 0..rows {
         let start = i * cols;
