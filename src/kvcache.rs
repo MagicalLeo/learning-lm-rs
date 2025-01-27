@@ -33,8 +33,10 @@ impl<T: Default + Copy> KVCache<T> {
         self.v_cache[layer].slice(start * self.dim, &vec![self.length - start, self.dim])
     }
 
-    pub fn increment(&mut self, seq_len: usize){
+    pub fn increment(&mut self, seq_len: usize) {
+        println!("Before increment: length = {}", self.length);
         self.length += seq_len;
+        println!("After increment: length = {}", self.length);
     }
 
     pub fn len(&self) -> usize {

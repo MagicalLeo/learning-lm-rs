@@ -43,7 +43,9 @@ pub fn masked_softmax(y: &mut Tensor<f32>) {
     let ndim = y.shape().len();
     assert!(ndim >= 2);
     let seq_len = y.shape()[ndim - 2];
+    print!("seq_len: {}\n", seq_len);
     let total_seq_len = y.shape()[ndim - 1];
+    print!("total_seq_len: {}\n", total_seq_len);
     let batch = y.size() / (seq_len * total_seq_len);
     let data = unsafe { y.data_mut() };
     for b in 0..batch {
@@ -127,17 +129,26 @@ pub fn matmul_transb(c: &mut Tensor<f32>, beta: f32, a: &Tensor<f32>, b: &Tensor
     assert!(c_shape.len() == 2, "C must be a 2D tensor");
     assert!(a_shape.len() == 2, "A must be a 2D tensor");
     assert!(b_shape.len() == 2, "B must be a 2D tensor");
-    assert!(c_shape[0] == a_shape[0], "C and A must have the same number of rows");
-    assert!(c_shape[1] == b_shape[0], "C columns must match B rows (after transpose)");
-    assert!(a_shape[1] == b_shape[1], "A columns must match B columns (before transpose)");
+    assert!(
+        c_shape[0] == a_shape[0],
+        "C and A must have the same number of rows"
+    );
+    assert!(
+        c_shape[1] == b_shape[0],
+        "C columns must match B rows (after transpose)"
+    );
+    assert!(
+        a_shape[1] == b_shape[1],
+        "A columns must match B columns (before transpose)"
+    );
 
     let a_ = a.data();
     let b_ = b.data();
     let c_ = unsafe { c.data_mut() };
 
-    let m = c_shape[0]; 
-    let n = c_shape[1]; 
-    let k = a_shape[1]; 
+    let m = c_shape[0];
+    let n = c_shape[1];
+    let k = a_shape[1];
 
     for i in 0..m {
         for j in 0..n {
@@ -150,7 +161,6 @@ pub fn matmul_transb(c: &mut Tensor<f32>, beta: f32, a: &Tensor<f32>, b: &Tensor
         }
     }
 }
-
 
 // Dot product of two tensors (treated as vectors)
 #[allow(unused)]
